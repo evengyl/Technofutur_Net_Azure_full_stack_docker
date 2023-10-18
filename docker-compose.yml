@@ -1,0 +1,101 @@
+version: "3.8"
+name: "full_stack_test_azure_techno"
+
+services:
+  db:
+    container_name: db_mysql
+    # build: ./db
+    image: evengylbstorm/db-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_DATABASE: $MYSQL_DATABASE
+    volumes:
+      - "./db/volumes_mysql_db:/var/lib/mysql"
+    restart: on-failure
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.5'
+          memory: 256m
+        limits:
+          cpus: '2'
+          memory: 1024m
+
+  api:
+    container_name: api_express
+    # build: ./api
+    image: evengylbstorm/api-without-sql
+    expose:
+      - $PORT
+    ports:
+      - "3000:$PORT"
+    environment:
+      PORT: $PORT
+    restart: on-failure
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.1'
+          memory: 64m
+        limits:
+          cpus: '0.3'
+          memory: 256m
+
+  api_sql:
+    container_name: api_with_mysql_connect
+    # build: ./api_db
+    image: evengylbstorm/api-with-mysql
+    expose:
+      - $PORT
+    ports:
+      - "3001:$PORT"
+    environment:
+      PORT: $PORT
+      API_MYSQL_HOST: $API_MYSQL_HOST
+      API_MYSQL_USER: $API_MYSQL_USER
+      API_MYSQL_PASSWORD: $API_MYSQL_PASSWORD
+      API_MYSQL_DATABASE: $API_MYSQL_DATABASE
+    depends_on:
+      - "db"
+    restart: on-failure
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.2'
+          memory: 64m
+        limits:
+          cpus: '1'
+          memory: 256m
+
+
+
+  web:
+    container_name: web_angular_nginx
+    # build: ./web
+    image: evengylbstorm/web-nginx-angu-prod
+    ports:
+      - "8080:$PORT_WEB"
+    expose:
+      -  $PORT_WEB
+    restart: on-failure
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.1'
+          memory: 32m
+        limits:
+          cpus: '0.5'
+          memory: 64m
+
+networks:
+  backend:
+
+#volumes:
+  
+
+
+#docker compose -f "docker-compose.yaml" up -d --build 
